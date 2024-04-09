@@ -621,8 +621,8 @@ class GUI:
         self.save_model(mode='model')
         self.renderer.gaussians.save_deformation(self.opt.outdir, self.opt.save_path)
 
-        for t in range(14):
-            self.save_model(mode='geo+tex', t=t)
+        # for t in range(14):
+        #     self.save_model(mode='geo+tex', t=t)
 
         if self.gui:
             while True:
