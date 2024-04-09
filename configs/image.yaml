@@ -25,7 +25,7 @@ lambda_zero123: 1
 # training batch size per iter
 batch_size: 16
 # training iterations for stage 1
-iters: 500
+iters: 2000
 # training iterations for stage 2
 iters_refine: 50
 # training camera radius

@@ -1,0 +1,18 @@
+description: video-data-test_n
+resources:
+    slots: 1
+    resource_pool: 128c256t_1536_4090
+    shm_size: 32G
+bind_mounts:
+    - host_path: /workspace/cym/
+      container_path: /run/determined/workdir/home/
+    - host_path: /SSD/
+      container_path: /run/determined/workdir/ssd_data/
+    - host_path: /datasets/
+      container_path: /run/determined/workdir/data/
+    - host_path: /datasets/cym-cache/.cache/
+      container_path: /run/determined/workdir/.cache/
+environment:
+    image: harbor.cvgl.lab/library/cym-3studio:v1.9
+    # image: harbor.cvgl.lab/library/lzq-3studio:py3.10-torch2.0-cu11.8-lightning2.0
+    # image: harbor.cvgl.lab/library/cym-it3d@sha256:fbd5c964cb3d3bca4f3c747eef8e08b7239bfdfa5e6860ad15665815f279a926
