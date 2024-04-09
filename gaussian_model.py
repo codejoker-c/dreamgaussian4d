@@ -511,7 +511,7 @@ class GaussianModel:
 
         self.densification_postfix(new_xyz, new_features_dc, new_features_rest, new_opacities, new_scaling, new_rotation)
 
-    def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size, max_points=10000):
+    def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size, max_points=3000):
         grads = self.xyz_gradient_accum / self.denom
         grads[grads.isnan()] = 0.0
 
@@ -523,7 +523,9 @@ class GaussianModel:
             big_points_vs = self.max_radii2D > max_screen_size
             big_points_ws = self.get_scaling.max(dim=1).values > 0.1 * extent
             prune_mask = torch.logical_or(torch.logical_or(prune_mask, big_points_vs), big_points_ws)
-        prune_mask = prune_mask > max_points
+
+        points_num_mask = torch.randperm(self._xyz.shape[0]).to("cuda") > max_points
+        prune_mask = torch.logical_or(prune_mask, points_num_mask)
 
         self.prune_points(prune_mask)
 
