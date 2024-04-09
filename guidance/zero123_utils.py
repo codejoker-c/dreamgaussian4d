@@ -27,7 +27,7 @@ class Zero123(nn.Module):
         self.dtype = torch.float16 if fp16 else torch.float32
 
         self.pipe = Zero123Pipeline.from_pretrained(
-            "/cym/model/zero123-xl-diffusers",
+            "/run/determined/workdir/data/huggingface_models/bennyguo--zero123-xl-diffusers",
             # './model_cache/zero123_xl',
             torch_dtype=self.dtype,
             trust_remote_code=True,
