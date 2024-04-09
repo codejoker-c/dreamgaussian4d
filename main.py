@@ -77,8 +77,6 @@ class GUI:
             self.renderer.initialize(num_pts=self.opt.num_pts)
 
 
-
-
     def seed_everything(self):
         try:
             seed = int(self.seed)

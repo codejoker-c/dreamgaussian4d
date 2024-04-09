@@ -11,6 +11,7 @@ import rembg
 
 import argparse
 
+
 def add_margin(pil_img, top, right, bottom, left, color):
     width, height = pil_img.size
     new_width = width + right + left
@@ -19,10 +20,11 @@ def add_margin(pil_img, top, right, bottom, left, color):
     result.paste(pil_img, (left, top))
     return result
 
+
 def resize_image(image, output_size=(1024, 576)):
-    image = image.resize((output_size[1],output_size[1]))
-    pad_size = (output_size[0]-output_size[1]) //2
-    image = add_margin(image, 0, pad_size, 0, pad_size, tuple(np.array(image)[0,0]))
+    image = image.resize((output_size[1], output_size[1]))
+    pad_size = (output_size[0] - output_size[1]) // 2
+    image = add_margin(image, 0, pad_size, 0, pad_size, tuple(np.array(image)[0, 0]))
     return image
 
 
@@ -44,8 +46,9 @@ def load_image(file, W, H, bg='white'):
         raise NotImplementedError
     # bgr to rgb
     input_img = input_img[..., ::-1].copy()
-    input_img = Image.fromarray(np.uint8(input_img*255))
+    input_img = Image.fromarray(np.uint8(input_img * 255))
     return input_img
+
 
 def load_image_w_bg(file, W, H):
     # load image
@@ -56,12 +59,13 @@ def load_image_w_bg(file, W, H):
     input_img = img[..., :3]
     # bgr to rgb
     input_img = input_img[..., ::-1].copy()
-    input_img = Image.fromarray(np.uint8(input_img*255))
+    input_img = Image.fromarray(np.uint8(input_img * 255))
     return input_img
+
 
 def gen_vid(name, seed, bg, is_pad):
     pipe = StableVideoDiffusionPipeline.from_pretrained(
-        "stabilityai/stable-video-diffusion-img2vid", torch_dtype=torch.float16, variant="fp16"
+        "/cym/model/stabilityai--stable-video-diffusion-img2vid", torch_dtype=torch.float16, variant="fp16"
     )
     # pipe.enable_model_cpu_offload()
     pipe.to("cuda")
@@ -101,7 +105,7 @@ def gen_vid(name, seed, bg, is_pad):
         export_to_gif(frames, f"data/{name}_generated.gif")
         for idx, img in enumerate(frames):
             if is_pad:
-                img = img.crop(((width-height) //2, 0, width - (width-height) //2, height))
+                img = img.crop(((width - height) // 2, 0, width - (width - height) // 2, height))
             img.save(f"data/{name}_{idx:03}.png")
 
 
