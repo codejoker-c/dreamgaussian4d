@@ -1,4 +1,6 @@
 import os
+import random
+
 import cv2
 import time
 import tqdm
@@ -216,14 +218,15 @@ class GUI:
             ### known view
             for b_idx in range(self.opt.batch_size):  # 14
                 cur_cam = copy.deepcopy(self.fixed_cam)
-                cur_cam.time = b_idx
+                cur_cam.time = random.randint(0, self.opt.video_length - 1)
                 out = self.renderer.render(cur_cam)
 
                 # rgb loss
                 image = out["image"].unsqueeze(0)  # [1, 3, H, W] in [0, 1]
                 # loss = loss + F.mse_loss(image, self.input_img_torch_list[b_idx])
                 loss = loss + 10000 * step_ratio * F.mse_loss(image,
-                                                              self.input_img_torch_list[b_idx]) / self.opt.batch_size
+                                                              self.input_img_torch_list[
+                                                                  cur_cam.time]) / self.opt.batch_size
 
                 # # mask loss
                 # mask = out["alpha"].unsqueeze(0) # [1, 1, H, W] in [0, 1]
@@ -234,6 +237,7 @@ class GUI:
             render_resolution = 128 if step_ratio < 0.3 else (256 if step_ratio < 0.6 else 512)
             # render_resolution = 512
             images = []
+            ref_images = []
             poses = []
             vers, hors, radii = [], [], []
             # avoid too large elevation (> 80 or < -80), and make sure it always cover [-30, 30]
@@ -255,8 +259,10 @@ class GUI:
                     pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
                     poses.append(pose)
 
+                    t = random.randint(0, self.opt.video_length - 1)
+
                     cur_cam = MiniCam(pose, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx,
-                                      self.cam.near, self.cam.far, time=b_idx)
+                                      self.cam.near, self.cam.far, time=t)
 
                     bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0],
                                             dtype=torch.float32, device="cuda")
@@ -264,6 +270,7 @@ class GUI:
 
                     image = out["image"].unsqueeze(0)  # [1, 3, H, W] in [0, 1]
                     images.append(image)
+                    ref_images.append(self.input_img_torch_list[t])
 
                     # enable mvdream training
                     if self.opt.mvdream:  # False
@@ -292,6 +299,7 @@ class GUI:
 
             images = torch.cat(images, dim=0)
 
+
             # poses = torch.from_numpy(np.stack(poses, axis=0)).to(self.device)
 
             # import kiui
@@ -306,9 +314,17 @@ class GUI:
                     loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, step_ratio)
 
             if self.enable_zero123:
+                c_list, v_list = [], []
+
+                for ref_image in ref_images:
+                    c, v = self.guidance_zero123.get_img_embeds(ref_image)
+                    c_list.append(c)
+                    v_list.append(v)
+                self.guidance_zero123.embeddings = [torch.cat(c_list, 0), torch.cat(v_list, 0)]
+
                 loss = loss + self.opt.lambda_zero123 * self.guidance_zero123.train_step(images, vers, hors, radii,
                                                                                          step_ratio) / (
-                                   self.opt.batch_size * self.opt.n_views)
+                               self.opt.batch_size * self.opt.n_views)
 
             if self.enable_svd:
                 loss = loss + self.opt.lambda_svd * self.guidance_svd.train_step(images, step_ratio)
@@ -326,7 +342,7 @@ class GUI:
             # densify and prune
             if self.step >= self.opt.density_start_iter and self.step <= self.opt.density_end_iter:
                 viewspace_point_tensor, visibility_filter, radii = out["viewspace_points"], out["visibility_filter"], \
-                out["radii"]
+                    out["radii"]
                 self.renderer.gaussians.max_radii2D[visibility_filter] = torch.max(
                     self.renderer.gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 self.renderer.gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
@@ -347,7 +363,7 @@ class GUI:
 
     def load_input(self, file):
         # file_list = [file.replace('.png', f'_{x:03d}.png') for x in range(self.opt.batch_size)]
-        file_list = [os.path.join(file, f"{x:03d}_rgba.png") for x in range(self.opt.batch_size)]
+        file_list = [os.path.join(file, f"{x:03d}_rgba.png") for x in range(self.opt.video_length)]
         self.input_img_list, self.input_mask_list = [], []
         for file in file_list:
             # load image

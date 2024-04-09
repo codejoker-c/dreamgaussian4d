@@ -14,13 +14,13 @@ scripts2
 
 model_cache
 
-logs
+logs/*ply
+logs/*pth
 videos
 images
 *.mp4
 
 vis_data*/
-logs*/
 data*/
 
 

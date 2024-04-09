@@ -833,7 +833,7 @@ class GaussianModel:
         return plane_tv_weight * self._plane_regulation() + time_smoothness_weight * self._time_regulation() + l1_time_planes_weight * self._l1_regulation()
     
 
-    def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size):
+    def densify_and_prune(self, max_grad, min_opacity, extent, max_screen_size, max_points=10000):
         grads = self.xyz_gradient_accum / self.denom
         grads[grads.isnan()] = 0.0
 

@@ -25,6 +25,7 @@ lambda_zero123: 4
 lambda_svd: 0
 # training batch size per iter
 batch_size: 7
+video_length: 14
 # training iterations for stage 1
 iters: 200
 # training iterations for stage 2
