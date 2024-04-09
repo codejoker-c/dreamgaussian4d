@@ -21,7 +21,7 @@ import copy
 class GUI:
     def __init__(self, opt):
         self.opt = opt  # shared with the trainer's opt to support in-place modification of rendering parameters.
-        self.gui = opt.gui # enable gui
+        self.gui = opt.gui  # enable gui
         self.W = opt.W
         self.H = opt.H
         self.cam = OrbitCamera(opt.W, opt.H, r=opt.radius, fovy=opt.fovy)
@@ -41,11 +41,9 @@ class GUI:
         self.guidance_zero123 = None
         self.guidance_svd = None
 
-
         self.enable_sd = False
         self.enable_zero123 = False
         self.enable_svd = False
-
 
         # renderer
         self.renderer = Renderer(sh_degree=self.opt.sh_degree)
@@ -73,18 +71,18 @@ class GUI:
         self.optimizer = None
         self.step = 0
         self.train_steps = 1  # steps per rendering loop
-        
+
         # load input data from cmdline
-        if self.opt.input is not None: # True
-            self.load_input(self.opt.input) # load imgs, if has bg, then rm bg; or just load imgs
-        
+
+        self.load_input(self.opt.input)  # load imgs, if has bg, then rm bg; or just load imgs
+
         # override prompt from cmdline
-        if self.opt.prompt is not None: # None
+        if self.opt.prompt is not None:  # None
             self.prompt = self.opt.prompt
 
         # override if provide a checkpoint
-        if self.opt.load is not None: # not None
-            self.renderer.initialize(self.opt.load)  
+        if self.opt.load is not None:  # not None
+            self.renderer.initialize(self.opt.load)
             # self.renderer.gaussians.load_model(opt.outdir, opt.save_path)             
         else:
             # initialize gaussians to a blob
@@ -131,13 +129,13 @@ class GUI:
             self.cam.far,
         )
 
-        self.enable_sd = self.opt.lambda_sd > 0 and self.prompt != "" # False
-        self.enable_zero123 = self.opt.lambda_zero123 > 0 # True
-        self.enable_svd = self.opt.lambda_svd > 0 and self.input_img is not None # False
+        self.enable_sd = self.opt.lambda_sd > 0 and self.prompt != ""  # False
+        self.enable_zero123 = self.opt.lambda_zero123 > 0  # True
+        self.enable_svd = self.opt.lambda_svd > 0 and self.input_img is not None  # False
 
         # lazy load guidance model
-        if self.guidance_sd is None and self.enable_sd: # False
-            if self.opt.mvdream: # False
+        if self.guidance_sd is None and self.enable_sd:  # False
+            if self.opt.mvdream:  # False
                 print(f"[INFO] loading MVDream...")
                 from guidance.mvdream_utils import MVDream
                 self.guidance_sd = MVDream(self.device)
@@ -148,14 +146,13 @@ class GUI:
                 self.guidance_sd = StableDiffusion(self.device)
                 print(f"[INFO] loaded SD!")
 
-        if self.guidance_zero123 is None and self.enable_zero123: # True
+        if self.guidance_zero123 is None and self.enable_zero123:  # True
             print(f"[INFO] loading zero123...")
             from guidance.zero123_utils import Zero123
             self.guidance_zero123 = Zero123(self.device, t_range=[0.02, self.opt.t_max])
             print(f"[INFO] loaded zero123!")
 
-
-        if self.guidance_svd is None and self.enable_svd: # False
+        if self.guidance_svd is None and self.enable_svd:  # False
             print(f"[INFO] loading SVD...")
             from guidance.svd_utils import StableVideoDiffusion
             self.guidance_svd = StableVideoDiffusion(self.device)
@@ -164,17 +161,25 @@ class GUI:
         # input image
         if self.input_img is not None:
             self.input_img_torch = torch.from_numpy(self.input_img).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_img_torch = F.interpolate(self.input_img_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
+            self.input_img_torch = F.interpolate(self.input_img_torch, (self.opt.ref_size, self.opt.ref_size),
+                                                 mode="bilinear", align_corners=False)
 
             self.input_mask_torch = torch.from_numpy(self.input_mask).permute(2, 0, 1).unsqueeze(0).to(self.device)
-            self.input_mask_torch = F.interpolate(self.input_mask_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False)
+            self.input_mask_torch = F.interpolate(self.input_mask_torch, (self.opt.ref_size, self.opt.ref_size),
+                                                  mode="bilinear", align_corners=False)
 
         if self.input_img_list is not None:
-            self.input_img_torch_list = [torch.from_numpy(input_img).permute(2, 0, 1).unsqueeze(0).to(self.device) for input_img in self.input_img_list]
-            self.input_img_torch_list = [F.interpolate(input_img_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False) for input_img_torch in self.input_img_torch_list]
-            
-            self.input_mask_torch_list = [torch.from_numpy(input_mask).permute(2, 0, 1).unsqueeze(0).to(self.device) for input_mask in self.input_mask_list]
-            self.input_mask_torch_list = [F.interpolate(input_mask_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear", align_corners=False) for input_mask_torch in self.input_mask_torch_list]
+            self.input_img_torch_list = [torch.from_numpy(input_img).permute(2, 0, 1).unsqueeze(0).to(self.device) for
+                                         input_img in self.input_img_list]
+            self.input_img_torch_list = [
+                F.interpolate(input_img_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear",
+                              align_corners=False) for input_img_torch in self.input_img_torch_list]
+
+            self.input_mask_torch_list = [torch.from_numpy(input_mask).permute(2, 0, 1).unsqueeze(0).to(self.device) for
+                                          input_mask in self.input_mask_list]
+            self.input_mask_torch_list = [
+                F.interpolate(input_mask_torch, (self.opt.ref_size, self.opt.ref_size), mode="bilinear",
+                              align_corners=False) for input_mask_torch in self.input_mask_torch_list]
         # prepare embeddings
         with torch.no_grad():
 
@@ -189,7 +194,7 @@ class GUI:
                         c_list.append(c)
                         v_list.append(v)
                 self.guidance_zero123.embeddings = [torch.cat(c_list, 0), torch.cat(v_list, 0)]
-            
+
             if self.enable_svd:
                 self.guidance_svd.get_img_embeds(self.input_img)
 
@@ -198,26 +203,27 @@ class GUI:
         ender = torch.cuda.Event(enable_timing=True)
         starter.record()
 
-        for _ in range(self.train_steps): # 1
+        for _ in range(self.train_steps):  # 1
 
-            self.step += 1 # self.step starts from 0
-            step_ratio = min(1, self.step / self.opt.iters) # 1, step / 500
+            self.step += 1  # self.step starts from 0
+            step_ratio = min(1, self.step / self.opt.iters)  # 1, step / 500
 
             # update lr
             self.renderer.gaussians.update_learning_rate(self.step)
 
             loss = 0
-        
+
             ### known view
-            for b_idx in range(self.opt.batch_size): # 14
+            for b_idx in range(self.opt.batch_size):  # 14
                 cur_cam = copy.deepcopy(self.fixed_cam)
                 cur_cam.time = b_idx
                 out = self.renderer.render(cur_cam)
 
                 # rgb loss
-                image = out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                image = out["image"].unsqueeze(0)  # [1, 3, H, W] in [0, 1]
                 # loss = loss + F.mse_loss(image, self.input_img_torch_list[b_idx])
-                loss = loss + 10000 * step_ratio * F.mse_loss(image, self.input_img_torch_list[b_idx]) / self.opt.batch_size
+                loss = loss + 10000 * step_ratio * F.mse_loss(image,
+                                                              self.input_img_torch_list[b_idx]) / self.opt.batch_size
 
                 # # mask loss
                 # mask = out["alpha"].unsqueeze(0) # [1, 1, H, W] in [0, 1]
@@ -249,26 +255,29 @@ class GUI:
                     pose = orbit_camera(self.opt.elevation + ver, hor, self.opt.radius + radius)
                     poses.append(pose)
 
-                    cur_cam = MiniCam(pose, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx, self.cam.near, self.cam.far, time=b_idx)
+                    cur_cam = MiniCam(pose, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx,
+                                      self.cam.near, self.cam.far, time=b_idx)
 
-                    bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0], dtype=torch.float32, device="cuda")
+                    bg_color = torch.tensor([1, 1, 1] if np.random.rand() > self.opt.invert_bg_prob else [0, 0, 0],
+                                            dtype=torch.float32, device="cuda")
                     out = self.renderer.render(cur_cam, bg_color=bg_color)
 
-                    image = out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                    image = out["image"].unsqueeze(0)  # [1, 3, H, W] in [0, 1]
                     images.append(image)
 
                     # enable mvdream training
-                    if self.opt.mvdream: # False
+                    if self.opt.mvdream:  # False
                         for view_i in range(1, 4):
                             pose_i = orbit_camera(self.opt.elevation + ver, hor + 90 * view_i, self.opt.radius + radius)
                             poses.append(pose_i)
 
-                            cur_cam_i = MiniCam(pose_i, render_resolution, render_resolution, self.cam.fovy, self.cam.fovx, self.cam.near, self.cam.far)
+                            cur_cam_i = MiniCam(pose_i, render_resolution, render_resolution, self.cam.fovy,
+                                                self.cam.fovx, self.cam.near, self.cam.far)
 
                             # bg_color = torch.tensor([0.5, 0.5, 0.5], dtype=torch.float32, device="cuda")
                             out_i = self.renderer.render(cur_cam_i, bg_color=bg_color)
 
-                            image = out_i["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                            image = out_i["image"].unsqueeze(0)  # [1, 3, H, W] in [0, 1]
                             images.append(image)
 
             # for b_idx in range(self.opt.batch_size):
@@ -280,7 +289,6 @@ class GUI:
 
             #     image = out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
             #     images.append(image)
-
 
             images = torch.cat(images, dim=0)
 
@@ -298,7 +306,9 @@ class GUI:
                     loss = loss + self.opt.lambda_sd * self.guidance_sd.train_step(images, step_ratio)
 
             if self.enable_zero123:
-                loss = loss + self.opt.lambda_zero123 * self.guidance_zero123.train_step(images, vers, hors, radii, step_ratio) / (self.opt.batch_size * self.opt.n_views)
+                loss = loss + self.opt.lambda_zero123 * self.guidance_zero123.train_step(images, vers, hors, radii,
+                                                                                         step_ratio) / (
+                                   self.opt.batch_size * self.opt.n_views)
 
             if self.enable_svd:
                 loss = loss + self.opt.lambda_svd * self.guidance_svd.train_step(images, step_ratio)
@@ -306,7 +316,7 @@ class GUI:
             # # temporal regularization
             # for t in range(self.opt.batch_size):
             #     means3D_final, rotations_final, scales_final, opacity_final = self.renderer.gaussians.get_deformed_everything(t)
-            
+
             # print(loss.item())
             # optimize step
             loss.backward()
@@ -315,14 +325,17 @@ class GUI:
 
             # densify and prune
             if self.step >= self.opt.density_start_iter and self.step <= self.opt.density_end_iter:
-                viewspace_point_tensor, visibility_filter, radii = out["viewspace_points"], out["visibility_filter"], out["radii"]
-                self.renderer.gaussians.max_radii2D[visibility_filter] = torch.max(self.renderer.gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                viewspace_point_tensor, visibility_filter, radii = out["viewspace_points"], out["visibility_filter"], \
+                out["radii"]
+                self.renderer.gaussians.max_radii2D[visibility_filter] = torch.max(
+                    self.renderer.gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 self.renderer.gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
                 if self.step % self.opt.densification_interval == 0:
                     # size_threshold = 20 if self.step > self.opt.opacity_reset_interval else None
-                    self.renderer.gaussians.densify_and_prune(self.opt.densify_grad_threshold, min_opacity=0.01, extent=0.5, max_screen_size=1)
-                
+                    self.renderer.gaussians.densify_and_prune(self.opt.densify_grad_threshold, min_opacity=0.01,
+                                                              extent=0.5, max_screen_size=1)
+
                 if self.step % self.opt.opacity_reset_interval == 0:
                     self.renderer.gaussians.reset_opacity()
 
@@ -332,9 +345,9 @@ class GUI:
 
         self.need_update = True
 
-    
     def load_input(self, file):
-        file_list = [file.replace('.png', f'_{x:03d}.png') for x in range(self.opt.batch_size)]
+        # file_list = [file.replace('.png', f'_{x:03d}.png') for x in range(self.opt.batch_size)]
+        file_list = [os.path.join(file, f"{x:03d}_rgba.png") for x in range(self.opt.batch_size)]
         self.input_img_list, self.input_mask_list = [], []
         for file in file_list:
             # load image
@@ -344,7 +357,7 @@ class GUI:
                 if self.bg_remover is None:
                     self.bg_remover = rembg.new_session()
                 img = rembg.remove(img, session=self.bg_remover)
-                cv2.imwrite(file.replace('.png', '_rgba.png'), img) 
+                cv2.imwrite(file.replace('.png', '_rgba.png'), img)
             img = cv2.resize(img, (self.W, self.H), interpolation=cv2.INTER_AREA)
             img = img.astype(np.float32) / 255.0
             input_mask = img[..., 3:]
@@ -405,27 +418,28 @@ class GUI:
                     self.cam.far,
                     time=t
                 )
-                
+
                 cur_out = self.renderer.render(cur_cam)
 
-                rgbs = cur_out["image"].unsqueeze(0) # [1, 3, H, W] in [0, 1]
+                rgbs = cur_out["image"].unsqueeze(0)  # [1, 3, H, W] in [0, 1]
 
                 # enhance texture quality with zero123 [not working well]
                 # if self.opt.guidance_model == 'zero123':
                 #     rgbs = self.guidance.refine(rgbs, [ver], [hor], [0])
-                    # import kiui
-                    # kiui.vis.plot_image(rgbs)
-                    
+                # import kiui
+                # kiui.vis.plot_image(rgbs)
+
                 # get coordinate in texture image
                 pose = torch.from_numpy(pose.astype(np.float32)).to(self.device)
                 proj = torch.from_numpy(self.cam.perspective.astype(np.float32)).to(self.device)
 
-                v_cam = torch.matmul(F.pad(mesh.v, pad=(0, 1), mode='constant', value=1.0), torch.inverse(pose).T).float().unsqueeze(0)
+                v_cam = torch.matmul(F.pad(mesh.v, pad=(0, 1), mode='constant', value=1.0),
+                                     torch.inverse(pose).T).float().unsqueeze(0)
                 v_clip = v_cam @ proj.T
                 rast, rast_db = dr.rasterize(glctx, v_clip, mesh.f, (render_resolution, render_resolution))
 
-                depth, _ = dr.interpolate(-v_cam[..., [2]], rast, mesh.f) # [1, H, W, 1]
-                depth = depth.squeeze(0) # [H, W, 1]
+                depth, _ = dr.interpolate(-v_cam[..., [2]], rast, mesh.f)  # [1, H, W, 1]
+                depth = depth.squeeze(0)  # [H, W, 1]
 
                 alpha = (rast[0, ..., 3:] > 0).float()
 
@@ -444,7 +458,7 @@ class GUI:
 
                 uvs = uvs.view(-1, 2).clamp(0, 1)[mask]
                 rgbs = rgbs.view(3, -1).permute(1, 0)[mask].contiguous()
-                
+
                 # update texture image
                 cur_albedo, cur_cnt = mipmap_linear_grid_put_2d(
                     h, w,
@@ -453,7 +467,7 @@ class GUI:
                     min_resolution=256,
                     return_count=True,
                 )
-                
+
                 # albedo += cur_albedo
                 # cnt += cur_cnt
                 mask = cnt.squeeze(-1) < 0.1
@@ -499,11 +513,11 @@ class GUI:
 
     # no gui mode
     def train(self, iters=500, ui=False):
-        image_list =[]
+        image_list = []
         from PIL import Image
         from diffusers.utils import export_to_video, export_to_gif
         interval = 1
-        nframes = iters // interval # 250
+        nframes = iters // interval  # 250
         hor = 180
         delta_hor = 4 * 360 / nframes
         time = 0
@@ -515,14 +529,14 @@ class GUI:
             self.prepare_train()
             if self.gui:
                 self.viser_gui.set_renderer(self.renderer, self.fixed_cam)
-            
-            for i in tqdm.trange(iters): # 500
+
+            for i in tqdm.trange(iters):  # 500
                 self.train_step()
                 if self.gui:
                     self.viser_gui.update()
 
                 if i % interval == 0:
-                    pose = orbit_camera(self.opt.elevation, hor-180, self.opt.radius)
+                    pose = orbit_camera(self.opt.elevation, hor - 180, self.opt.radius)
                     cur_cam = MiniCam(
                         pose,
                         256,
@@ -538,14 +552,14 @@ class GUI:
 
                     out = outputs["image"].cpu().detach().numpy().astype(np.float32)
                     out = np.transpose(out, (1, 2, 0))
-                    out = Image.fromarray(np.uint8(out*255))
+                    out = Image.fromarray(np.uint8(out * 255))
                     image_list.append(out)
 
                     time = (time + delta_time) % 14
-                    hor = (hor+delta_hor) % 360
+                    hor = (hor + delta_hor) % 360
             # final eval
             for _ in range(nframes // 4):
-                pose = orbit_camera(self.opt.elevation, hor-180, self.opt.radius)
+                pose = orbit_camera(self.opt.elevation, hor - 180, self.opt.radius)
                 cur_cam = MiniCam(
                     pose,
                     256,
@@ -561,25 +575,25 @@ class GUI:
 
                 out = outputs["image"].cpu().detach().numpy().astype(np.float32)
                 out = np.transpose(out, (1, 2, 0))
-                out = Image.fromarray(np.uint8(out*255))
+                out = Image.fromarray(np.uint8(out * 255))
                 image_list.append(out)
 
                 time = (time + delta_time) % 14
-                hor = (hor+delta_hor) % 360
+                hor = (hor + delta_hor) % 360
 
             export_to_gif(image_list, f'vis_data/train_{opt.save_path}.gif')
             export_to_video(image_list, f'vis_data/train_{opt.save_path}.mp4')
             # # do a last prune
             # self.renderer.gaussians.prune(min_opacity=0.01, extent=1, max_screen_size=1)
         # render eval
-        image_list =[]
-        nframes = 14 *5
+        image_list = []
+        nframes = 14 * 5
         hor = 180
         delta_hor = 360 / nframes
         time = 0
         delta_time = 1
         for _ in range(nframes):
-            pose = orbit_camera(self.opt.elevation, hor-180, self.opt.radius)
+            pose = orbit_camera(self.opt.elevation, hor - 180, self.opt.radius)
             cur_cam = MiniCam(
                 pose,
                 512,
@@ -595,14 +609,13 @@ class GUI:
 
             out = outputs["image"].cpu().detach().numpy().astype(np.float32)
             out = np.transpose(out, (1, 2, 0))
-            out = Image.fromarray(np.uint8(out*255))
+            out = Image.fromarray(np.uint8(out * 255))
             image_list.append(out)
 
             time = (time + delta_time) % 14
-            hor = (hor+delta_hor) % 360
+            hor = (hor + delta_hor) % 360
 
         export_to_gif(image_list, f'vis_data/{opt.save_path}.gif')
-
 
         # save
         self.save_model(mode='model')
@@ -615,6 +628,7 @@ class GUI:
             while True:
                 self.viser_gui.update()
 
+
 if __name__ == "__main__":
     import argparse
     from omegaconf import OmegaConf
@@ -625,7 +639,6 @@ if __name__ == "__main__":
 
     # override default config from cli
     opt = OmegaConf.merge(OmegaConf.load(args.config), OmegaConf.from_cli(extras))
-
 
     # auto find mesh from stage 1
     opt.load = os.path.join(opt.outdir, opt.save_path + '_model.ply')
