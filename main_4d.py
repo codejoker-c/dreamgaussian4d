@@ -571,7 +571,7 @@ class GUI:
                     out = Image.fromarray(np.uint8(out * 255))
                     image_list.append(out)
 
-                    time = (time + delta_time) % 14
+                    time = (time + delta_time) % self.opt.video_length
                     hor = (hor + delta_hor) % 360
             # final eval
             for _ in range(nframes // 4):
@@ -594,7 +594,7 @@ class GUI:
                 out = Image.fromarray(np.uint8(out * 255))
                 image_list.append(out)
 
-                time = (time + delta_time) % 14
+                time = (time + delta_time) % self.opt.video_length
                 hor = (hor + delta_hor) % 360
 
             export_to_gif(image_list, f'vis_data/train_{opt.save_path}.gif')
@@ -603,7 +603,7 @@ class GUI:
             # self.renderer.gaussians.prune(min_opacity=0.01, extent=1, max_screen_size=1)
         # render eval
         image_list = []
-        nframes = 14 * 5
+        nframes = self.opt.video_length * 5
         hor = 180
         delta_hor = 360 / nframes
         time = 0
@@ -628,7 +628,7 @@ class GUI:
             out = Image.fromarray(np.uint8(out * 255))
             image_list.append(out)
 
-            time = (time + delta_time) % 14
+            time = (time + delta_time) % self.opt.video_length
             hor = (hor + delta_hor) % 360
 
         export_to_gif(image_list, f'vis_data/{opt.save_path}.gif')
